@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:Jaid/display.chat.git"
+    "url": "git+https://github.com/Jaid/display.chat.git"
   },
   "scripts": {
     "test": "bun test --max-concurrency 1"
