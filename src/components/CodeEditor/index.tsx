@@ -4,8 +4,10 @@ import type {editor} from 'monaco-editor/editor/editor.api'
 
 import Editor, {loader} from '@monaco-editor/react'
 import {once} from 'es-toolkit/function'
+import {configureMonacoYaml} from 'monaco-yaml'
 import {useCallback, useEffect, useRef} from 'react'
 
+import {inputJsonSchema} from '../../lib/inputJsonSchema.ts'
 import monaco, {ensureTheme, ensureYaml, setupMonacoEnvironment} from '../../lib/monaco.ts'
 import {offsetToPosition} from '../../lib/sourcePosition.ts'
 
@@ -14,6 +16,17 @@ import css from './style.module.sass'
 loader.config({monaco})
 setupMonacoEnvironment()
 const ensureSetupOnce = once((instance: typeof monaco) => {
+  configureMonacoYaml(instance, {
+    completion: true,
+    hover: true,
+    validate: false,
+    format: {enable: false},
+    schemas: [{
+      uri: 'display.chat://schema/input.json',
+      fileMatch: ['*'],
+      schema: inputJsonSchema,
+    }],
+  })
   ensureTheme(instance)
   ensureYaml(instance)
 })
@@ -95,6 +108,7 @@ const CodeEditor = ({value, issues, onChange, onReady}: CodeEditorProps) => {
       beforeMount={handleBeforeMount}
       theme="black"
       language="yaml"
+      path="chat.yaml"
       value={value}
       options={options}
       onMount={handleMount}

@@ -6,6 +6,7 @@ import {getNextAssetId, isConfigurationFile, isImageFile, readConfigurationFile}
 import {buildMessages} from '#src/lib/blocks.ts'
 import {diffLines, formatDiff} from '#src/lib/diff.ts'
 import {highlightCode} from '#src/lib/highlight.ts'
+import {inputJsonSchema} from '#src/lib/inputJsonSchema.ts'
 import {parseSource} from '#src/lib/parse.ts'
 import {presets} from '#src/lib/presets.ts'
 import {inputSchema} from '#src/lib/schema.ts'
@@ -105,12 +106,12 @@ describe('resolveSender', () => {
     expect(resolveSender('user', input, lookup)).toMatchObject({
       name: 'User',
       side: 'ours',
-      background: '#ff5cce',
+      color: {background: {text: '#00810b', code: '#00810b'}},
     })
     expect(resolveSender('assistant', input, lookup)).toMatchObject({
       name: 'Assistant',
       side: 'theirs',
-      background: '#3b9cf6',
+      color: {background: {text: '#04003d', code: '#04003d'}},
       avatar: {scale: 75},
     })
   })
@@ -127,8 +128,38 @@ describe('resolveSender', () => {
     }, lookup)
     expect(sender.side).toBe('ours')
     expect(sender.avatar.src).toBe('/avatars/user.svg')
-    expect(sender.avatar.scale).toBe(90)
-    expect(sender.background).toBe('#ff5cce')
+    expect(sender.avatar.scale).toBe(60)
+    expect(sender.color.background).toEqual({text: '#00810b', code: '#00810b'})
+  })
+  test('supports shorthand and detailed sender colors', () => {
+    const shorthand = resolveSender('assistant', inputSchema.parse({
+      chat: [],
+      assistant: {color: '#123456'},
+    }), lookup)
+    expect(shorthand.color).toEqual({background: {text: '#123456', code: '#123456'}})
+    expect(shorthand.avatar.background).toBe('#04003d')
+
+    const detailed = resolveSender('assistant', inputSchema.parse({
+      chat: [],
+      assistant: {
+        color: {
+          background: {
+            text: '#112233',
+            code: '#223344',
+          },
+          text: '#fefefe',
+          name: '#abcdef',
+        },
+      },
+    }), lookup)
+    expect(detailed.color).toEqual({
+      background: {
+        text: '#112233',
+        code: '#223344',
+      },
+      text: '#fefefe',
+      name: '#abcdef',
+    })
   })
   test('uses the padded system glyph by default', () => {
     const sender = resolveSender('system', {chat: []}, () => undefined)
@@ -154,7 +185,7 @@ describe('resolveSender', () => {
     }, lookup)
     expect(sourceOnly.avatar.src).toBe('/jaid.jxl')
     expect(sourceOnly.avatar.scale).toBe(100)
-    expect(sourceOnly.background).toBe('#ff5cce')
+    expect(sourceOnly.color.background).toEqual({text: '#00810b', code: '#00810b'})
 
     const detailed = inputSchema.parse({
       chat: [],
@@ -246,6 +277,20 @@ describe('offsetToPosition', () => {
   })
 })
 describe('definitive contract coverage', () => {
+  test('JSON Schema exposes root and message properties for editor completion', () => {
+    const rootProperties = inputJsonSchema.properties ?? {}
+    for (const key of ['chat', 'style', 'user', 'assistant', 'senders']) {
+      expect(key in rootProperties).toBe(true)
+    }
+    const chat = rootProperties.chat
+    if (!chat || typeof chat === 'boolean' || !chat.items || typeof chat.items === 'boolean' || Array.isArray(chat.items)) {
+      throw new Error('Expected chat to be an array with an object item schema.')
+    }
+    const messageProperties = chat.items.properties ?? {}
+    for (const key of ['from', 'style', 'text', 'markdown', 'blocks']) {
+      expect(key in messageProperties).toBe(true)
+    }
+  })
   test('accepts bundled Shiki syntax themes and rejects unknown ones', () => {
     const valid = parseSource('style:\n  syntaxTheme: vesper\nchat: []\n')
     expect(valid.error).toBeUndefined()
@@ -268,19 +313,19 @@ describe('definitive contract coverage', () => {
     const input = inputSchema.parse({chat: []})
     expect(input.system.avatar).toMatchObject({
       src: 'system',
-      background: '#b83b15',
+      background: '#6d0505',
     })
     expect(input.user.avatar).toMatchObject({
       src: 'user',
-      background: '#ff5cce',
+      background: '#00810b',
     })
     expect(input.assistant.avatar).toMatchObject({
       src: 'assistant',
-      background: '#3b9cf6',
+      background: '#04003d',
     })
     expect(input.tool.avatar).toMatchObject({
       src: 'tool',
-      background: '#2e7c38',
+      background: '#4b2d00',
     })
   })
   test('every bundled preset round-trips through YAML validation', () => {

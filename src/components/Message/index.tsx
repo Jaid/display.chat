@@ -26,10 +26,13 @@ export type MessageProps = {
 
 const Message = ({message, sender, rootStyle, showAvatar, showName, joinsPrevious, joinsNext, assets, onHover, onJump}: MessageProps) => {
   const style = resolveStyle(rootStyle, message.style)
-  const background = message.style?.background ?? sender.background
-  const color = getContrastColor(background)
-  const bubbleStyle: CSSProperties & {'--bubble-background': string} = {
+  const background = message.style?.background ?? sender.color.background.text
+  const codeBackground = sender.color.background.code
+  const color = sender.color.text ?? getContrastColor(background)
+  const bubbleStyle: CSSProperties & {'--bubble-background': string
+    '--code-background': string} = {
     '--bubble-background': background,
+    '--code-background': codeBackground,
     background,
     color,
     maxWidth: getWidth(style.messageWidth),
@@ -43,7 +46,7 @@ const Message = ({message, sender, rootStyle, showAvatar, showName, joinsPreviou
   >
     {showAvatar ? <Avatar avatar={sender.avatar} name={sender.name}/> : <div className={css.avatarSpacer} aria-hidden="true"/>}
     <div className={css.content} data-side={sender.side}>
-      {showName ? <div className={css.name}>{sender.name}</div> : undefined}
+      {showName ? <div className={css.name} style={{color: sender.color.name ?? sender.color.background.text}}>{sender.name}</div> : undefined}
       <div
         className={css.bubble}
         data-side={sender.side}

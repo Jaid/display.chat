@@ -228,6 +228,50 @@ describe('components', () => {
     expect(html).toContain('visible')
     expect(html).not.toContain('secret')
   })
+  test('detailed sender colors override bubble text and sender name colors', async () => {
+    const html = await render('Message', {
+      message: {
+        index: 0,
+        from: 'assistant',
+        blocks: [
+          {kind: 'text', value: 'Colored'},
+          {kind: 'code', value: 'const colored = true'},
+        ],
+      },
+      sender: {
+        id: 'assistant',
+        name: 'Assistant',
+        side: 'theirs',
+        color: {
+          background: {
+            text: '#112233',
+            code: '#334455',
+          },
+          text: '#fedcba',
+          name: '#abcdef',
+        },
+        avatar: {
+          src: '/avatars/assistant.svg',
+          background: '#112233',
+          shape: 'circle',
+          scale: 90,
+          glyph: true,
+        },
+      },
+      rootStyle: undefined,
+      showAvatar: true,
+      showName: true,
+      joinsPrevious: false,
+      joinsNext: false,
+      assets: noAssets,
+      onHover: () => {},
+      onJump: () => {},
+    })
+    expect(html).toContain('color:#abcdef')
+    expect(html).toContain('color:#fedcba')
+    expect(html).toContain('background:#112233')
+    expect(html).toContain('--code-background:#334455')
+  })
   test('light sender backgrounds receive dark bubble text', async () => {
     const html = await render('Message', {
       message: {
@@ -244,7 +288,7 @@ describe('components', () => {
         id: 'assistant',
         name: 'Assistant',
         side: 'theirs',
-        background: 'MintCream',
+        color: {background: {text: 'MintCream', code: 'MintCream'}},
         avatar: {
           src: '/avatars/assistant.svg',
           background: 'MintCream',

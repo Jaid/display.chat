@@ -1,6 +1,7 @@
 import 'monaco-editor/features/register.all'
 
 import * as monaco from 'monaco-editor/editor/editor.api'
+import YamlWorker from 'monaco-yaml/yaml.worker?worker'
 import {conf as yamlConf, language as yamlLanguage} from 'monaco-editor/languages/definitions/yaml/yaml'
 
 export default monaco
@@ -11,7 +12,12 @@ export default monaco
  */
 export const setupMonacoEnvironment = () => {
   globalThis.MonacoEnvironment = {
-    getWorker: () => new Worker(new URL('monacoWorker.ts', import.meta.url), {type: 'module'}),
+    getWorker: (_moduleId, label) => {
+      if (label === 'yaml') {
+        return new YamlWorker()
+      }
+      return new Worker(new URL('monacoWorker.ts', import.meta.url), {type: 'module'})
+    },
   }
 }
 
@@ -30,17 +36,11 @@ export const ensureTheme = (instance: typeof monaco) => {
 const yamlKey = String.raw`(?:[\w$\-.]+|"[^"]*"|'[^']*')`
 
 /**
- * Registers YAML directly instead of through `monaco-editor/languages/definitions/yaml/register`,
+ * Configures Monaco’s YAML tokenizer and indentation rules after `monaco-yaml` registers the language,
  * because that module overwrites the language configuration with its own (much simpler) enter
  * rules as soon as the language is first encountered.
  */
 export const ensureYaml = (instance: typeof monaco) => {
-  instance.languages.register({
-    id: 'yaml',
-    extensions: ['.yaml', '.yml'],
-    aliases: ['YAML', 'yaml', 'YML', 'yml'],
-    mimetypes: ['application/x-yaml', 'text/x-yaml'],
-  })
   instance.languages.setMonarchTokensProvider('yaml', yamlLanguage)
   const configuration = {
     ...yamlConf,

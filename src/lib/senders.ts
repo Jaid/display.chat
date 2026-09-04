@@ -2,6 +2,7 @@ import type {Input} from './schema.ts'
 import type {BuiltinSenderId, Side} from './builtinSenders.ts'
 
 import {startCase} from 'es-toolkit/string'
+import tinyhand from 'tinyhand'
 
 import {builtinSenderDefaults, isBuiltinSenderId} from './builtinSenders.ts'
 
@@ -26,10 +27,18 @@ export type ResolvedAvatar = {
   src: string
 }
 
+export type ResolvedSenderColor = {
+  background: {
+    code: string
+    text: string
+  }
+  text?: string
+  name?: string
+}
+
 export type ResolvedSender = {
   avatar: ResolvedAvatar
-  /** Default message background, matching the avatar background. */
-  background: string
+  color: ResolvedSenderColor
   id: string
   name: string
   side: Side
@@ -63,15 +72,24 @@ export const resolveSender = (id: string, input: Input, assets: AssetLookup): Re
   const fallback = builtinSenderDefaults[fallbackId]
   const side = config?.side ?? fallback.side
   const avatarInput = config?.avatar
+  const colorInput = config?.color
+  const avatarBackground = avatarInput !== undefined && typeof avatarInput === 'object' ? avatarInput.background : undefined
+  const colorBase = colorInput === undefined
+    ? {background: avatarBackground ?? fallback.background}
+    : tinyhand('background', colorInput)
+  const color: ResolvedSenderColor = {
+    ...colorBase,
+    background: tinyhand(['text', 'code'], colorBase.background),
+  }
   const avatar: ResolvedAvatar = avatarInput !== undefined && typeof avatarInput === 'object' ? {
     src: resolveSrc(avatarInput.src, assets),
-    background: avatarInput.background ?? fallback.background,
+    background: avatarInput.background ?? color.background.text,
     shape: avatarInput.shape ?? 'circle',
     scale: avatarInput.scale ?? 100,
     glyph: typeof avatarInput.src === 'string' && isBuiltinSenderId(avatarInput.src),
   } : {
     src: avatarInput === undefined ? getGlyphPath(fallbackId) : resolveSrc(avatarInput, assets),
-    background: fallback.background,
+    background: color.background.text,
     shape: 'circle',
     scale: avatarInput === undefined ? fallback.scale : 100,
     glyph: avatarInput === undefined || typeof avatarInput === 'string' && isBuiltinSenderId(avatarInput),
@@ -81,7 +99,7 @@ export const resolveSender = (id: string, input: Input, assets: AssetLookup): Re
     name: config?.name ?? startCase(id),
     side,
     avatar,
-    background: avatar.background,
+    color,
   }
 }
 

@@ -5,12 +5,25 @@ import reactPlugin, {reactCompilerPreset} from '@vitejs/plugin-react'
 import postcssAutoprefixer from 'autoprefixer'
 import cssnano from 'cssnano-preset-advanced'
 import postcssNormalize from 'postcss-normalize'
+import {fileURLToPath} from 'node:url'
 import {mergeConfig} from 'vite'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
 const getCommonConfig = () => {
   const config: UserConfig = {
+    resolve: {
+      alias: [
+        {
+          find: /^monaco-worker-manager$/,
+          replacement: fileURLToPath(new URL('./src/lib/monacoWorkerManager.ts', import.meta.url)),
+        }, {
+          find: /^monaco-worker-manager\/worker$/,
+          replacement: fileURLToPath(new URL('./src/lib/monacoWorkerManagerWorker.ts', import.meta.url)),
+        },
+      ],
+    },
+    optimizeDeps: {include: ['path-browserify']},
     build: {target: 'chrome152'},
     plugins: [titlePlugin(), reactPlugin(), babelPlugin({presets: [reactCompilerPreset()]}), mediaMixinsPlugin()],
     css: {postcss: {plugins: [postcssNormalize() as any, postcssAutoprefixer]}},

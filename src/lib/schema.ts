@@ -3,6 +3,7 @@ import {themeNames} from '@shikijs/themes'
 import {builtinSenderIds, getBuiltinSenderInputDefault, senderSides} from './builtinSenders.ts'
 import type {BuiltinSenderId} from './builtinSenders.ts'
 import flattenString from 'flatten-string'
+import tinyhand from 'tinyhand'
 import zod from 'zod'
 
 export {builtinSenderIds} from './builtinSenders.ts'
@@ -27,9 +28,29 @@ export const avatarSchema = zod.union([
     scale: zod.number().min(0).max(300).default(100).describe(flattenString.paragraphs('foreground content scale inside the avatar background shape, as a percentage', 'Values above 100 may outgrow the background shape; overflow is clipped.')),
   }),
 ]).describe('an avatar source or detailed avatar definition')
+const senderBackgroundObjectSchema = zod.strictObject({
+  text: nonEmptyString.describe('background value as CSS for text content'),
+  code: nonEmptyString.describe('background value as CSS for code, data and diff content'),
+})
+const senderBackgroundSchema = zod.union([nonEmptyString, senderBackgroundObjectSchema])
+const senderColorObjectSchema = zod.strictObject({
+  background: senderBackgroundSchema.describe('message backgrounds as one CSS shorthand or separate text and code values'),
+  text: nonEmptyString.optional().describe('message text color as CSS; when omitted, choose a contrasting color automatically'),
+  name: nonEmptyString.optional().describe('sender name text color as CSS; when omitted, use the sender text background color'),
+})
+export const senderColorSchema = zod.union([nonEmptyString, senderColorObjectSchema])
+  .transform(color => {
+    const normalized = tinyhand('background', color)
+    return {
+      ...normalized,
+      background: tinyhand(['text', 'code'], normalized.background),
+    }
+  })
+  .describe('sender color with background shorthand support and optional text and name colors')
 const senderFields = {
   name: nonEmptyString.optional().describe(flattenString.paragraphs('optional display name', 'When omitted, derive it from the sender ID with `startCase` from `es-toolkit/string`.')),
   avatar: avatarSchema.optional(),
+  color: senderColorSchema.optional(),
 }
 const createSenderSchema = (defaultSide: zod.infer<typeof sideSchema>) => zod.strictObject({
   ...senderFields,
@@ -117,6 +138,7 @@ export type Font = zod.output<typeof fontSchema>
 export type SyntaxTheme = zod.output<typeof syntaxThemeSchema>
 export type Avatar = zod.output<typeof avatarSchema>
 export type Sender = zod.output<typeof senderSchema>
+export type SenderColor = zod.output<typeof senderColorSchema>
 export type CodeContent = zod.output<typeof codeContentSchema>
 export type CallContent = zod.output<typeof callContentSchema>
 export type DiffContent = zod.output<typeof diffContentSchema>
