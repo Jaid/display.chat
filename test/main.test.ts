@@ -178,6 +178,19 @@ describe('resolveStyle', () => {
     expect(resolveStyle({syntaxTheme: 'vesper'}).syntaxTheme).toBe('vesper')
     expect(resolveStyle({syntaxTheme: 'vesper'}, {syntaxTheme: 'nord'}).syntaxTheme).toBe('nord')
   })
+  test('message style only overrides explicitly specified root properties', () => {
+    const result = parseSource('style:\n  dataFlavor: yaml\n  messageWidth: 50ch\nchat:\n  - from: assistant\n    style:\n      syntaxTheme: nord\n    data:\n      hello: world\n')
+    expect(result.error).toBeUndefined()
+    expect(result.input?.chat[0].style).toEqual({
+      syntaxTheme: 'nord',
+      visible: true,
+    })
+    expect(resolveStyle(result.input?.style, result.input?.chat[0].style)).toMatchObject({
+      dataFlavor: 'yaml',
+      messageWidth: '50ch',
+      syntaxTheme: 'nord',
+    })
+  })
   test('falls back to JSON5', () => {
     expect(resolveStyle().dataFlavor).toBe('json5')
   })

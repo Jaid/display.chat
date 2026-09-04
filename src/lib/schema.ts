@@ -89,7 +89,10 @@ export const styleSchema = zod.strictObject({
   syntaxTheme: syntaxThemeSchema.optional(),
   messageWidth: zod.union([zod.number().min(0), nonEmptyString]).default('70ch').describe(flattenString.paragraphs('maximum message width', 'Numbers are interpreted as pixels', 'Strings are CSS width values.')),
 }).describe('rendering options for the chat mockup')
-export const messageStyleSchema = styleSchema.extend({
+export const messageStyleSchema = zod.strictObject({
+  ...styleSchema.shape,
+  dataFlavor: styleSchema.shape.dataFlavor.unwrap().optional(),
+  messageWidth: styleSchema.shape.messageWidth.unwrap().optional(),
   background: nonEmptyString.optional().describe('background value as CSS overriding the message bubble background'),
   visible: zod.boolean().default(true).describe('whether this message is rendered'),
 }).describe('rendering options for an individual chat message')
