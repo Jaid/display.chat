@@ -1,0 +1,28 @@
+@import-normalize
+@import-sanitize
+
+@font-face
+  font-family: main
+  src: local("Geologica NF"), local("Geologica"), local("Inter"), local("Roboto Flex")
+
+@font-face
+  font-family: code
+  src: local("JetBrains Mono NF"), local("JetBrains Mono NL"), local("JetBrains Mono"), local("Iosevka NF"), local("Fira Code"), local("Cascadia Code")
+
+:root
+  color-scheme: dark
+  background: black
+  color: white
+  @include light
+    color-scheme: light
+    background: white
+    color: black
+
+a:hover
+  text-decoration: underline
+
+code
+  font-family: code, ui-monospace, monospace
+
+pre>code
+  white-space: pre-wrap

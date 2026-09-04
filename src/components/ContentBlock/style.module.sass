@@ -1,0 +1,127 @@
+.block
+  min-width: 0
+  cursor: pointer
+  user-select: text
+
+  &[data-bleed=true]
+    margin-inline: -14px
+
+    &:first-child
+      margin-top: -10px
+
+    &:last-child
+      margin-bottom: -10px
+
+.text
+  white-space: pre-wrap
+  overflow-wrap: anywhere
+
+.markdown
+  display: flex
+  flex-direction: column
+  gap: 8px
+  overflow-wrap: anywhere
+
+  > :first-child
+    margin-top: 0
+
+  > :last-child
+    margin-bottom: 0
+
+  :global(p)
+    margin: 0
+
+  :global(ul),
+  :global(ol)
+    margin: 0
+    padding-left: 1.4em
+
+  :global(h1),
+  :global(h2),
+  :global(h3),
+  :global(h4)
+    margin: 0
+    font-size: 1.05em
+
+  :global(code)
+    font-family: var(--mono-font, code), ui-monospace, monospace
+    font-size: 0.88em
+    padding: 0.1em 0.35em
+    border-radius: 5px
+    background: rgb(0 0 0 / 22%)
+
+    @include light
+      background: rgb(255 255 255 / 30%)
+
+  :global(blockquote)
+    margin: 0
+    padding-left: 0.8em
+    border-left: 3px solid currentColor
+    opacity: 0.85
+
+  :global(table)
+    border-collapse: collapse
+
+  :global(th),
+  :global(td)
+    border: 1px solid currentColor
+    padding: 2px 6px
+
+.image
+  margin: 0
+  display: flex
+  flex-direction: column
+
+  img
+    display: block
+    width: 100%
+    height: auto
+
+.caption
+  padding: 4px 12px 8px
+  font-size: 0.78em
+  opacity: 0.7
+  font-family: var(--mono-font, code), ui-monospace, monospace
+
+.missing
+  padding: 8px 12px
+  border-radius: 8px
+  font-family: var(--mono-font, code), ui-monospace, monospace
+  font-size: 0.8em
+  background: rgb(0 0 0 / 25%)
+
+  @include light
+    background: rgb(0 0 0 / 8%)
+
+.fileName
+  padding: 6px 12px
+  font-family: var(--mono-font, code), ui-monospace, monospace
+  font-size: 0.75em
+  opacity: 0.75
+  overflow-wrap: anywhere
+
+.call
+  display: flex
+  flex-direction: column
+  gap: 6px
+  padding: 10px 14px
+  border-radius: 10px
+  background: rgb(0 0 0 / 22%)
+
+  @include light
+    background: rgb(0 0 0 / 7%)
+
+.callHeader
+  display: flex
+  align-items: center
+  gap: 8px
+
+.callIcon
+  font-size: 1.1em
+  opacity: 0.8
+
+.callName
+  font-family: var(--mono-font, code), ui-monospace, monospace
+  font-size: 0.85em
+  font-weight: 600
+  overflow-wrap: anywhere

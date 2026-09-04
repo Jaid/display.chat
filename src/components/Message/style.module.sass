@@ -1,0 +1,41 @@
+.message
+  display: flex
+  align-items: flex-start
+  gap: 10px
+
+  &[data-side=ours]
+    flex-direction: row-reverse
+
+.content
+  display: flex
+  flex-direction: column
+  gap: 3px
+  min-width: 0
+  max-width: 100%
+
+  &[data-side=ours]
+    align-items: flex-end
+
+.name
+  font-size: 0.76em
+  font-weight: 600
+  letter-spacing: 0.02em
+  opacity: 0.65
+  padding-inline: 4px
+
+.bubble
+  display: flex
+  flex-direction: column
+  gap: 10px
+  padding: 10px 14px
+  border-radius: 16px
+  overflow: hidden
+  min-width: 0
+  max-width: 100%
+  text-align: start
+
+  &[data-side=theirs]
+    border-top-left-radius: 3px
+
+  &[data-side=ours]
+    border-top-right-radius: 3px

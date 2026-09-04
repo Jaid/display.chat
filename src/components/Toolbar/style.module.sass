@@ -1,0 +1,46 @@
+.toolbar
+  position: absolute
+  inset-block-end: 14px
+  inset-inline-end: 18px
+  display: flex
+  align-items: center
+  gap: 8px
+  z-index: 2
+
+.button
+  padding: 6px 12px
+  border-radius: 999px
+  border: 1px solid rgb(127 127 127 / 40%)
+  background: rgb(20 20 20 / 78%)
+  backdrop-filter: blur(8px)
+  color: #f2f2f2
+  font: inherit
+  font-size: 0.82em
+  cursor: pointer
+  transition: background 120ms, border-color 120ms
+
+  &:hover:not(:disabled)
+    background: rgb(50 50 50 / 88%)
+    border-color: rgb(127 127 127 / 70%)
+
+  &:disabled
+    opacity: 0.5
+    cursor: default
+
+  &:focus-visible
+    outline: 2px solid #3b9cf6
+    outline-offset: 2px
+
+  @include light
+    background: rgb(255 255 255 / 82%)
+    color: #14161a
+
+    &:hover:not(:disabled)
+      background: rgb(255 255 255 / 95%)
+
+.status
+  font-size: 0.78em
+  opacity: 0.7
+  padding: 4px 8px
+  border-radius: 999px
+  background: rgb(127 127 127 / 20%)

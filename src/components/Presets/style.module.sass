@@ -1,0 +1,58 @@
+.presets
+  display: flex
+  flex-direction: column
+  gap: 28px
+  padding: 40px 32px
+  max-width: 760px
+  margin-inline: auto
+
+.intro
+  display: flex
+  flex-direction: column
+  gap: 10px
+
+.heading
+  margin: 0
+  font-size: 1.5em
+  font-weight: 600
+
+.paragraph
+  margin: 0
+  opacity: 0.65
+  line-height: 1.5
+
+.grid
+  display: grid
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))
+  gap: 12px
+
+.preset
+  display: flex
+  flex-direction: column
+  gap: 4px
+  align-items: flex-start
+  text-align: start
+  padding: 12px 14px
+  border-radius: 12px
+  border: 1px solid rgb(127 127 127 / 35%)
+  background: rgb(127 127 127 / 8%)
+  color: inherit
+  font: inherit
+  cursor: pointer
+  transition: background 120ms, border-color 120ms
+
+  &:hover
+    background: rgb(127 127 127 / 18%)
+    border-color: rgb(127 127 127 / 60%)
+
+  &:focus-visible
+    outline: 2px solid #3b9cf6
+    outline-offset: 2px
+
+.title
+  font-weight: 600
+
+.description
+  font-size: 0.85em
+  opacity: 0.6
+  line-height: 1.4

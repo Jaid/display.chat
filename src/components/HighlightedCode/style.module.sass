@@ -1,0 +1,34 @@
+.code
+  margin: 0
+  border-radius: 8px
+  // Wrapping instead of scrolling keeps long lines inside the exported PNG.
+  white-space: pre-wrap
+  overflow-wrap: anywhere
+  overflow: hidden
+  font-family: var(--mono-font, code), ui-monospace, monospace
+  font-size: 0.82em
+  line-height: 1.55
+  tab-size: 2
+  background: black
+  user-select: text
+
+  :global(.shiki)
+    margin: 0
+    padding: 10px 12px
+    background: transparent
+    font-family: inherit
+    font-size: inherit
+    line-height: inherit
+
+  :global(.shiki),
+  :global(.shiki span)
+    color: var(--shiki-dark)
+    background-color: transparent
+
+  @include light
+    background: white
+
+    :global(.shiki),
+    :global(.shiki span)
+      color: var(--shiki-light)
+      background-color: transparent
