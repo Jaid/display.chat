@@ -1,0 +1,33 @@
+.streak
+  display: flex
+  align-items: flex-start
+  max-width: 100%
+
+  &[data-side=ours]
+    flex-direction: row-reverse
+
+.content
+  display: flex
+  flex-direction: column
+  gap: 3px
+  min-width: 0
+  max-width: 100%
+
+  &[data-side=ours]
+    align-items: flex-end
+
+.name
+  font-weight: 200
+  font-size: 22px
+  margin-inline: 14px
+  align-content: center
+  margin-top: -12px
+
+.messages
+  display: grid
+  gap: 0
+  width: fit-content
+  max-width: 100%
+
+  > *
+    width: 100%

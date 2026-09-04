@@ -139,7 +139,7 @@ describe('components', () => {
       expect(html).toContain('Hello')
     }
   })
-  test('Chat marks adjacent messages from the same sender as joined', async () => {
+  test('Chat groups adjacent messages from the same sender into streaks', async () => {
     const result = parseSource('chat:\n  - from: assistant\n    text: one\n  - from: assistant\n    text: two\n  - from: user\n    text: three\n')
     const messages = buildMessages(result.input!.chat, result.document)
     const html = await render('Chat', {
@@ -151,6 +151,7 @@ describe('components', () => {
     })
     expect(html).toContain('data-joins-next="true"')
     expect(html).toContain('data-joins-previous="true"')
+    expect(html.match(/data-message-streak="true"/gu)?.length).toBe(2)
     expect(html.match(/<img[^>]+src="\/avatars\/assistant\.svg"/gu)?.length).toBe(1)
   })
   test('Chat renders one message per chat entry', async () => {
@@ -229,15 +230,15 @@ describe('components', () => {
     expect(html).not.toContain('secret')
   })
   test('detailed sender colors override bubble text and sender name colors', async () => {
-    const html = await render('Message', {
-      message: {
+    const html = await render('MessageStreak', {
+      messages: [{
         index: 0,
         from: 'assistant',
         blocks: [
           {kind: 'text', value: 'Colored'},
           {kind: 'code', value: 'const colored = true'},
         ],
-      },
+      }],
       sender: {
         id: 'assistant',
         name: 'Assistant',
@@ -259,10 +260,6 @@ describe('components', () => {
         },
       },
       rootStyle: undefined,
-      showAvatar: true,
-      showName: true,
-      joinsPrevious: false,
-      joinsNext: false,
       assets: noAssets,
       onHover: () => {},
       onJump: () => {},

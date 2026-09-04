@@ -1,42 +1,18 @@
 .message
-  display: flex
-  align-items: flex-start
-
-  &[data-side=ours]
-    flex-direction: row-reverse
-
-.avatarSpacer
-  flex: none
-  width: 48px
-  height: 48px
-
-.content
-  display: flex
-  flex-direction: column
-  gap: 3px
   min-width: 0
   max-width: 100%
-
-  &[data-side=ours]
-    align-items: flex-end
-
-.name
-  // padding-inline: 4px
-  font-weight: 200
-  font-size: 20px
-  height: 34px
-  margin-inline: 16px
-  align-content: center
+  box-sizing: border-box
 
 .bubble
   display: flex
   flex-direction: column
   gap: 10px
+  box-sizing: border-box
+  width: 100%
   padding: 10px 14px
   border-radius: 16px
   overflow: hidden
   min-width: 0
-  max-width: 100%
   text-align: start
 
   &[data-side=theirs]
@@ -46,10 +22,11 @@
     border-top-right-radius: 3px
 
   &[data-joins-next=true]
-    border-bottom-left-radius: 0
-    border-bottom-right-radius: 0
+    border-bottom-left-radius: 8px
+    border-bottom-right-radius: 8px
+    corner-block-end-shape: bevel
 
   &[data-joins-previous=true]
-    border-top-left-radius: 0
-    border-top-right-radius: 0
-
+    border-top-left-radius: 8px
+    border-top-right-radius: 8px
+    corner-block-start-shape: bevel

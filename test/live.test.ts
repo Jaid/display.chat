@@ -117,6 +117,26 @@ for (const host of ['chrome', 'firefox'] as const) {
       await page.waitForSelector('.display-chat-source-hover')
       expect(await page.$('.display-chat-source-hover')).not.toBeNull()
     }, {timeout: 60_000})
+    test('groups consecutive messages into equal-width streaks', async () => {
+      await insertPreset(page, 'Every block kind')
+      const result = await page.evaluate(() => {
+        const streak = [...document.querySelectorAll<HTMLElement>('[data-message-streak]')]
+          .find(candidate => candidate.querySelectorAll('[data-message-index]').length > 1)
+        if (!streak) {
+          return
+        }
+        const messages = [...streak.querySelectorAll<HTMLElement>('[data-message-index]')]
+        return {
+          widths: messages.map(message => message.getBoundingClientRect().width),
+          gaps: messages.slice(1).map((message, index) => message.getBoundingClientRect().top - messages[index].getBoundingClientRect().bottom),
+          avatarCount: streak.querySelectorAll(':scope > div > img, :scope > img').length,
+        }
+      })
+      expect(result).toBeDefined()
+      expect(new Set(result!.widths.map(width => Math.round(width * 100))).size).toBe(1)
+      expect(result!.gaps.every(gap => Math.abs(gap) < 0.01)).toBe(true)
+      expect(result!.avatarCount).toBe(1)
+    }, {timeout: 60_000})
     test('code backgrounds derive from their message bubble color', async () => {
       await insertPreset(page, 'Every block kind')
       await page.waitForSelector('[data-kind="code"] [data-syntax-state]')
