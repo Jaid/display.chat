@@ -1,13 +1,18 @@
+import {themeNames} from '@shikijs/themes'
+
+import {builtinSenderIds, getBuiltinSenderInputDefault, senderSides} from './builtinSenders.ts'
+import type {BuiltinSenderId} from './builtinSenders.ts'
 import flattenString from 'flatten-string'
 import zod from 'zod'
 
-export const builtinSenderIds = ['system', 'user', 'assistant', 'tool'] as const
+export {builtinSenderIds} from './builtinSenders.ts'
 const nonEmptyString = zod.string().nonempty()
 export const roleIdSchema = zod.enum(builtinSenderIds).describe('built-in sender role ID')
 export const messageFromSchema = nonEmptyString.describe('a built-in sender ID or a key from the root senders object')
 export const urlSchema = zod.union([zod.url(), zod.string().regex(/^(?:\.{1,2}\/|\/)/u)]).describe('absolute URL or site/file-relative URL path')
 export const avatarSrcSchema = zod.union([urlSchema, zod.int().nonnegative(), roleIdSchema]).describe('avatar source: a URL, an integer ID referencing an imported picture, or a built-in sender role ID')
-export const sideSchema = zod.enum(['ours', 'theirs']).describe('which edge messages from this sender align to')
+export const sideSchema = zod.enum(senderSides).describe('which edge messages from this sender align to')
+export const syntaxThemeSchema = zod.enum(themeNames).describe('bundled Shiki theme used for syntax highlighting')
 export const avatarShapeSchema = zod.union([
   zod.enum(['circle', 'square', 'squircle', 'rounded']), zod.strictObject({
     shape: zod.enum(['squircle', 'rounded']).default('squircle'),
@@ -19,7 +24,7 @@ export const avatarSchema = zod.union([
     src: avatarSrcSchema.describe('avatar source: a URL, an integer ID referencing an imported picture, or a built-in sender role ID'),
     background: nonEmptyString.optional().describe('background value as CSS displayed behind the avatar image'),
     shape: avatarShapeSchema.optional(),
-    scale: zod.number().min(0).max(300).default(90).describe(flattenString.paragraphs('foreground content scale inside the avatar background shape, as a percentage', 'Values above 100 may outgrow the background shape; overflow is clipped.')),
+    scale: zod.number().min(0).max(300).default(100).describe(flattenString.paragraphs('foreground content scale inside the avatar background shape, as a percentage', 'Values above 100 may outgrow the background shape; overflow is clipped.')),
   }),
 ]).describe('an avatar source or detailed avatar definition')
 const senderFields = {
@@ -30,22 +35,15 @@ const createSenderSchema = (defaultSide: zod.infer<typeof sideSchema>) => zod.st
   ...senderFields,
   side: sideSchema.default(defaultSide),
 }).describe('optional customization for a chat sender')
-const createBuiltinSenderSchema = (id: zod.infer<typeof roleIdSchema>,
-  defaultSide: zod.infer<typeof sideSchema>,
-  background: string) => zod.strictObject({
-  ...senderFields,
-  avatar: avatarSchema.default({
-    src: id,
-    background,
-    scale: 90,
-  }),
-  side: sideSchema.default(defaultSide),
-}).describe('optional customization for a built-in chat sender')
+const createBuiltinSenderField = (id: BuiltinSenderId) => {
+  const defaults = getBuiltinSenderInputDefault(id)
+  return zod.strictObject({
+    ...senderFields,
+    avatar: avatarSchema.default(defaults.avatar),
+    side: sideSchema.default(defaults.side),
+  }).describe('optional customization for a built-in chat sender').default(defaults)
+}
 export const senderSchema = createSenderSchema('theirs')
-const systemSenderSchema = createBuiltinSenderSchema('system', 'ours', '#b83b15')
-const userSenderSchema = createBuiltinSenderSchema('user', 'ours', '#ff5cce')
-const assistantSenderSchema = createBuiltinSenderSchema('assistant', 'theirs', '#3b9cf6')
-const toolSenderSchema = createBuiltinSenderSchema('tool', 'theirs', '#2e7c38')
 export const codeContentSchema = zod.union([
   zod.string(), zod.strictObject({
     text: zod.string(),
@@ -88,6 +86,7 @@ export const styleSchema = zod.strictObject({
   dataFlavor: zod.enum(['json', 'json5', 'yaml']).default('json5').describe('serialization format used to render data message content'),
   font: fontSchema.optional(),
   monoFont: fontSchema.optional(),
+  syntaxTheme: syntaxThemeSchema.optional(),
   messageWidth: zod.union([zod.number().min(0), nonEmptyString]).default('70ch').describe(flattenString.paragraphs('maximum message width', 'Numbers are interpreted as pixels', 'Strings are CSS width values.')),
 }).describe('rendering options for the chat mockup')
 export const messageStyleSchema = styleSchema.extend({
@@ -112,6 +111,7 @@ export type Chat = zod.infer<typeof chatSchema>
 export type Style = zod.output<typeof styleSchema>
 export type MessageStyle = zod.output<typeof messageStyleSchema>
 export type Font = zod.output<typeof fontSchema>
+export type SyntaxTheme = zod.output<typeof syntaxThemeSchema>
 export type Avatar = zod.output<typeof avatarSchema>
 export type Sender = zod.output<typeof senderSchema>
 export type CodeContent = zod.output<typeof codeContentSchema>
@@ -122,38 +122,10 @@ const customSenderIdSchema = nonEmptyString.refine(id => !builtinSenderIds.inclu
 export const inputSchema = zod.strictObject({
   background: nonEmptyString.default('black').describe('background value as CSS for the chat mockup'),
   color: nonEmptyString.default('white').describe('text color as CSS for the chat mockup'),
-  system: systemSenderSchema.default({
-    avatar: {
-      src: 'system',
-      background: '#b83b15',
-      scale: 90,
-    },
-    side: 'ours',
-  }),
-  user: userSenderSchema.default({
-    avatar: {
-      src: 'user',
-      background: '#ff5cce',
-      scale: 90,
-    },
-    side: 'ours',
-  }),
-  assistant: assistantSenderSchema.default({
-    avatar: {
-      src: 'assistant',
-      background: '#3b9cf6',
-      scale: 90,
-    },
-    side: 'theirs',
-  }),
-  tool: toolSenderSchema.default({
-    avatar: {
-      src: 'tool',
-      background: '#2e7c38',
-      scale: 90,
-    },
-    side: 'theirs',
-  }),
+  system: createBuiltinSenderField('system'),
+  user: createBuiltinSenderField('user'),
+  assistant: createBuiltinSenderField('assistant'),
+  tool: createBuiltinSenderField('tool'),
   senders: zod.record(customSenderIdSchema, senderSchema).optional().describe(flattenString.paragraphs('additional named chat senders', 'Keys are sender IDs referenced by `chat[].from`.')),
   chat: chatSchema,
   style: styleSchema.optional(),

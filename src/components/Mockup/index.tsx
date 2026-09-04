@@ -19,6 +19,7 @@ export type MockupProps = {
   empty: boolean
   input?: ParsedInput
   messages: Array<RenderMessage>
+  onHover: (range?: Range) => void
   onJump: (range?: Range) => void
   onSelectPreset: (preset: Preset) => void
 }
@@ -26,7 +27,7 @@ export type MockupProps = {
 const getErrorMessage = (error: unknown) => {
   return error instanceof Error ? error.message : String(error)
 }
-const Mockup = ({input, messages, assets, empty, onJump, onSelectPreset}: MockupProps) => {
+const Mockup = ({input, messages, assets, empty, onHover, onJump, onSelectPreset}: MockupProps) => {
   const canvasRef = useRef<HTMLDivElement>(null)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<string>()
@@ -82,7 +83,7 @@ const Mockup = ({input, messages, assets, empty, onJump, onSelectPreset}: Mockup
     void handleDownload()
   }, [handleDownload])
   const monoFamily = getFontStyle(input?.style?.monoFont).fontFamily
-  return <div className={css.panel}>
+  return <div className={css.panel} data-chat-panel>
     <div className={css.scroll}>
       <div
         className={css.canvas}
@@ -94,7 +95,7 @@ const Mockup = ({input, messages, assets, empty, onJump, onSelectPreset}: Mockup
           ...monoFamily === undefined ? undefined : {'--mono-font': monoFamily},
         }}
       >
-        {empty ? <Presets onSelect={onSelectPreset}/> : <Chat input={input} messages={messages} assets={assets} onJump={onJump}/>}
+        {empty ? <Presets onSelect={onSelectPreset}/> : <Chat input={input} messages={messages} assets={assets} onHover={onHover} onJump={onJump}/>}
       </div>
     </div>
     {empty ? undefined : <Toolbar onCopy={triggerCopy} onDownload={triggerDownload} busy={busy} status={status}/>}

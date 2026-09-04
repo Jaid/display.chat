@@ -44,6 +44,7 @@ const App = () => {
   const assetsRef = useRef(assets)
   assetsRef.current = assets
   const [editorInstance, setEditorInstance] = useState<editor.IStandaloneCodeEditor | null>(null)
+  const hoverDecorationsRef = useRef<editor.IEditorDecorationsCollection | null>(null)
   const sourceRef = useRef(source)
   sourceRef.current = source
   const parseResult = useMemo(() => parseSource(source), [source])
@@ -58,6 +59,40 @@ const App = () => {
   const assetLookup = useCallback((id: number) => {
     return assets.find(asset => asset.id === id)?.url
   }, [assets])
+  const hoverSourceRange = useCallback((range?: Range) => {
+    const instance = editorInstance
+    const decorations = hoverDecorationsRef.current
+    const model = instance?.getModel()
+    if (!instance || !decorations || !model) {
+      return
+    }
+    if (!range) {
+      decorations.clear()
+      return
+    }
+    const start = offsetToPosition(sourceRef.current, range[0])
+    const endOffset = Math.max(range[0], range[2] - 1)
+    const end = offsetToPosition(sourceRef.current, endOffset)
+    decorations.set([
+      {
+        range: {
+          startLineNumber: start.lineNumber,
+          startColumn: 1,
+          endLineNumber: end.lineNumber,
+          endColumn: model.getLineMaxColumn(end.lineNumber),
+        },
+        options: {
+          className: 'display-chat-source-hover',
+          isWholeLine: true,
+        },
+      },
+    ])
+  }, [editorInstance])
+  const handleEditorReady = useCallback((instance: editor.IStandaloneCodeEditor) => {
+    hoverDecorationsRef.current?.clear()
+    hoverDecorationsRef.current = instance.createDecorationsCollection()
+    setEditorInstance(instance)
+  }, [])
   const jumpToRange = useCallback((range?: Range) => {
     const instance = editorInstance
     if (!instance) {
@@ -143,7 +178,7 @@ const App = () => {
                 value={source}
                 issues={parseResult.issues}
                 onChange={handleSourceChange}
-                onReady={setEditorInstance}
+                onReady={handleEditorReady}
               />
             </Suspense>
           </div>
@@ -160,6 +195,7 @@ const App = () => {
           messages={messages}
           assets={assetLookup}
           empty={empty}
+          onHover={hoverSourceRange}
           onJump={jumpToRange}
           onSelectPreset={handleSelectPreset}
         />

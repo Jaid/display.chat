@@ -1,4 +1,5 @@
 import type {Highlighter} from './shiki.ts'
+import type {BundledTheme} from 'shiki/themes'
 
 import {bundledLanguageIds, highlightThemes} from './languages.ts'
 
@@ -16,10 +17,10 @@ const getHighlighter = () => {
   return highlighterPromise
 }
 const cache = new Map<string, string>
-const getCacheKey = (code: string, language: string) => `${language} ${code}`
+const getCacheKey = (code: string, language: string, syntaxTheme?: string) => `${syntaxTheme ?? ''} ${language} ${code}`
 
-export const getCachedHighlight = (code: string, language: string) => {
-  return cache.get(getCacheKey(code, language))
+export const getCachedHighlight = (code: string, language: string, syntaxTheme?: string) => {
+  return cache.get(getCacheKey(code, language, syntaxTheme))
 }
 
 const normalizeLanguage = (language: string) => {
@@ -34,8 +35,8 @@ const isBundledLanguage = (language: string): language is (typeof bundledLanguag
  * Highlights code to Shiki HTML with both light and dark theme colors emitted as CSS variables.
  * Results are cached so that re-renders while typing stay synchronous.
  */
-export const highlightCode = async (code: string, language: string) => {
-  const key = getCacheKey(code, language)
+export const highlightCode = async (code: string, language: string, syntaxTheme?: string) => {
+  const key = getCacheKey(code, language, syntaxTheme)
   const cached = cache.get(key)
   if (cached !== undefined) {
     return cached
@@ -49,9 +50,14 @@ export const highlightCode = async (code: string, language: string) => {
       lang = 'text'
     }
   }
+  const theme = syntaxTheme as BundledTheme | undefined
+  if (theme !== undefined && !highlighter.getLoadedThemes().includes(theme)) {
+    await highlighter.loadTheme(theme)
+  }
+  const themes = theme === undefined ? highlightThemes : {dark: theme, light: theme}
   const html = highlighter.codeToHtml(code, {
     lang,
-    themes: highlightThemes,
+    themes,
     defaultColor: false,
   })
   cache.set(key, html)

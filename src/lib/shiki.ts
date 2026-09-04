@@ -3,6 +3,7 @@ import type {HighlighterGeneric} from 'shiki/core'
 
 import {createBundledHighlighter} from 'shiki/core'
 import {createJavaScriptRegexEngine} from 'shiki/engine/javascript'
+import {bundledThemes} from 'shiki/themes'
 
 import {bundledLanguageIds, highlightThemes} from './languages.ts'
 
@@ -58,10 +59,6 @@ const bundledLanguages = {
   yaml: () => import('@shikijs/langs/yaml'),
   zig: () => import('@shikijs/langs/zig'),
 } satisfies Record<HighlightLanguage, unknown>
-const bundledThemes = {
-  'github-dark-default': () => import('@shikijs/themes/github-dark-default'),
-  'github-light-default': () => import('@shikijs/themes/github-light-default'),
-} satisfies Record<(typeof highlightThemes)[keyof typeof highlightThemes], unknown>
 const createHighlighter = createBundledHighlighter({
   langs: bundledLanguages,
   themes: bundledThemes,

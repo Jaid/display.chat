@@ -9,10 +9,10 @@ export type ToolbarProps = {
 
 const Toolbar = ({onCopy, onDownload, busy, status}: ToolbarProps) => {
   return <div className={css.toolbar}>
-    <button type="button" className={css.button} onClick={onCopy} disabled={busy}>
+    <button type="button" className={css.button} data-export-button onClick={onCopy} disabled={busy}>
       Copy PNG
     </button>
-    <button type="button" className={css.button} onClick={onDownload} disabled={busy}>
+    <button type="button" className={css.button} data-export-button onClick={onDownload} disabled={busy}>
       Download PNG
     </button>
     {status === undefined ? undefined : <span className={css.status}>{status}</span>}

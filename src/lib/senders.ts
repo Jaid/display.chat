@@ -1,10 +1,11 @@
 import type {Input} from './schema.ts'
+import type {BuiltinSenderId, Side} from './builtinSenders.ts'
 
 import {startCase} from 'es-toolkit/string'
 
-import {builtinSenderIds} from './schema.ts'
+import {builtinSenderDefaults, isBuiltinSenderId} from './builtinSenders.ts'
 
-export type Side = 'ours' | 'theirs'
+export type {Side} from './builtinSenders.ts'
 
 export type AvatarShape
   = | {radius: number
@@ -34,30 +35,6 @@ export type ResolvedSender = {
   side: Side
 }
 
-type BuiltinDefault = {
-  background: string
-  side: Side
-}
-
-export const builtinDefaults: Record<string, BuiltinDefault> = {
-  system: {
-    side: 'ours',
-    background: '#b83b15',
-  },
-  user: {
-    side: 'ours',
-    background: '#ff5cce',
-  },
-  assistant: {
-    side: 'theirs',
-    background: '#3b9cf6',
-  },
-  tool: {
-    side: 'theirs',
-    background: '#2e7c38',
-  },
-}
-
 export const getGlyphPath = (roleId: string) => `/avatars/${roleId}.svg`
 
 export type AssetLookup = (id: number) => string | undefined
@@ -66,7 +43,7 @@ const resolveSrc = (src: number | string, assets: AssetLookup) => {
   if (typeof src === 'number') {
     return assets(src) ?? getGlyphPath('user')
   }
-  if ((builtinSenderIds as ReadonlyArray<string>).includes(src)) {
+  if (isBuiltinSenderId(src)) {
     return getGlyphPath(src)
   }
   return src
@@ -77,27 +54,27 @@ const resolveSrc = (src: number | string, assets: AssetLookup) => {
  * leaves out. Unknown sender IDs are treated as custom senders on the “theirs” side.
  */
 export const resolveSender = (id: string, input: Input, assets: AssetLookup): ResolvedSender => {
-  const isBuiltin = (builtinSenderIds as ReadonlyArray<string>).includes(id)
-  const config = isBuiltin ? input[id as 'assistant' | 'system' | 'tool' | 'user'] : input.senders?.[id]
-  let fallbackId = id
-  if (!isBuiltin) {
-    fallbackId = config?.side === 'ours' ? 'user' : 'assistant'
+  const isBuiltin = isBuiltinSenderId(id)
+  const config = isBuiltin ? input[id] : input.senders?.[id]
+  let fallbackId: BuiltinSenderId = isBuiltin ? id : 'assistant'
+  if (!isBuiltin && config?.side === 'ours') {
+    fallbackId = 'user'
   }
-  const fallback = builtinDefaults[fallbackId] ?? builtinDefaults.assistant
+  const fallback = builtinSenderDefaults[fallbackId]
   const side = config?.side ?? fallback.side
   const avatarInput = config?.avatar
   const avatar: ResolvedAvatar = avatarInput !== undefined && typeof avatarInput === 'object' ? {
     src: resolveSrc(avatarInput.src, assets),
     background: avatarInput.background ?? fallback.background,
     shape: avatarInput.shape ?? 'circle',
-    scale: avatarInput.scale ?? 90,
-    glyph: typeof avatarInput.src === 'string' && (builtinSenderIds as ReadonlyArray<string>).includes(avatarInput.src),
+    scale: avatarInput.scale ?? 100,
+    glyph: typeof avatarInput.src === 'string' && isBuiltinSenderId(avatarInput.src),
   } : {
     src: avatarInput === undefined ? getGlyphPath(fallbackId) : resolveSrc(avatarInput, assets),
     background: fallback.background,
     shape: 'circle',
-    scale: 90,
-    glyph: avatarInput === undefined || typeof avatarInput === 'string' && (builtinSenderIds as ReadonlyArray<string>).includes(avatarInput),
+    scale: avatarInput === undefined ? fallback.scale : 100,
+    glyph: avatarInput === undefined || typeof avatarInput === 'string' && isBuiltinSenderId(avatarInput),
   }
   return {
     id,

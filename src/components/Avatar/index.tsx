@@ -7,7 +7,6 @@ export type AvatarProps = {
   avatar: ResolvedAvatar
   className?: string
   name?: string
-  size?: number
 }
 
 const getShapeStyle = (shape: AvatarShape): CSSProperties => {
@@ -35,12 +34,10 @@ const getShapeStyle = (shape: AvatarShape): CSSProperties => {
     }
   }
 }
-const Avatar = ({avatar, size = 40, name, className}: AvatarProps) => {
+const Avatar = ({avatar, name, className}: AvatarProps) => {
   return <div
     className={className ? `${css.avatar} ${className}` : css.avatar}
     style={{
-      width: size,
-      height: size,
       background: avatar.background,
       ...getShapeStyle(avatar.shape),
     }}

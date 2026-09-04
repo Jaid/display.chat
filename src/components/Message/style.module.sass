@@ -1,10 +1,14 @@
 .message
   display: flex
   align-items: flex-start
-  gap: 10px
 
   &[data-side=ours]
     flex-direction: row-reverse
+
+.avatarSpacer
+  flex: none
+  width: 48px
+  height: 48px
 
 .content
   display: flex
@@ -17,11 +21,13 @@
     align-items: flex-end
 
 .name
-  font-size: 0.76em
-  font-weight: 600
-  letter-spacing: 0.02em
   opacity: 0.65
-  padding-inline: 4px
+  // padding-inline: 4px
+  font-weight: 200
+  font-size: 20px
+  height: 34px
+  margin-inline: 16px
+  align-content: center
 
 .bubble
   display: flex
@@ -39,3 +45,12 @@
 
   &[data-side=ours]
     border-top-right-radius: 3px
+
+  &[data-joins-next=true]
+    border-bottom-left-radius: 0
+    border-bottom-right-radius: 0
+
+  &[data-joins-previous=true]
+    border-top-left-radius: 0
+    border-top-right-radius: 0
+

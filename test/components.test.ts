@@ -128,13 +128,30 @@ describe('components', () => {
         },
         sender: resolveSender(side === 'ours' ? 'user' : 'assistant', input, noAssets),
         rootStyle: undefined,
+        showAvatar: true,
         showName: true,
+        joinsPrevious: false,
+        joinsNext: false,
         assets: noAssets,
         onJump: () => {},
       })
       expect(html).toContain(`data-side="${side}"`)
       expect(html).toContain('Hello')
     }
+  })
+  test('Chat marks adjacent messages from the same sender as joined', async () => {
+    const result = parseSource('chat:\n  - from: assistant\n    text: one\n  - from: assistant\n    text: two\n  - from: user\n    text: three\n')
+    const messages = buildMessages(result.input!.chat, result.document)
+    const html = await render('Chat', {
+      input: result.input,
+      messages,
+      assets: noAssets,
+      onHover: () => {},
+      onJump: () => {},
+    })
+    expect(html).toContain('data-joins-next="true"')
+    expect(html).toContain('data-joins-previous="true"')
+    expect(html.match(/<img[^>]+src="\/avatars\/assistant\.svg"/gu)?.length).toBe(1)
   })
   test('Chat renders one message per chat entry', async () => {
     const result = parseSource('chat:\n  - from: user\n    text: one\n  - from: assistant\n    text: two\n')
@@ -238,6 +255,8 @@ describe('components', () => {
       },
       rootStyle: undefined,
       showName: true,
+      joinsPrevious: false,
+      joinsNext: false,
       assets: noAssets,
       onJump: () => {},
     })

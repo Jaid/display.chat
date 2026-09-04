@@ -97,6 +97,37 @@ for (const host of ['chrome', 'firefox'] as const) {
       const messages = await page.evaluate(() => document.querySelectorAll('[data-side]').length)
       expect(messages).toBeGreaterThan(2)
     }, {timeout: 60_000})
+    test('shows export controls only while the cursor is in the chat panel', async () => {
+      await insertPreset(page, 'Tool call')
+      const opacity = async () => page.$eval('[data-export-button]', element => getComputedStyle(element).opacity)
+      expect(await opacity()).toBe('0')
+      await page.hover('[data-chat-panel]')
+      await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-export-button]')!).opacity === '1')
+      expect(await opacity()).toBe('1')
+      await page.mouse.move(1, 1)
+      await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-export-button]')!).opacity === '0')
+    }, {timeout: 60_000})
+    test('hovering messages and blocks highlights their YAML source', async () => {
+      await insertPreset(page, 'Tool call')
+      await page.waitForSelector('.monaco-editor')
+      await page.hover('[data-message-index="1"] [data-kind="call"]')
+      await page.waitForSelector('.display-chat-source-hover')
+      expect(await page.$('.display-chat-source-hover')).not.toBeNull()
+      await page.hover('[data-message-index="0"]')
+      await page.waitForSelector('.display-chat-source-hover')
+      expect(await page.$('.display-chat-source-hover')).not.toBeNull()
+    }, {timeout: 60_000})
+    test('code backgrounds derive from their message bubble color', async () => {
+      await insertPreset(page, 'Every block kind')
+      await page.waitForSelector('[data-kind="code"] [data-syntax-state]')
+      const result = await page.$eval('[data-kind="code"] [data-syntax-state]', element => ({
+        background: getComputedStyle(element).backgroundColor,
+        supported: CSS.supports('background', 'hsl(from red h s clamp(25, round(l, 100), 75))'),
+      }))
+      expect(result.supported).toBe(true)
+      expect(result.background).not.toBe('rgba(0, 0, 0, 0)')
+      expect(result.background).not.toBe('rgb(0, 0, 0)')
+    }, {timeout: 60_000})
     test('is self-contained at runtime', async () => {
       await insertPreset(page, 'Tool call')
       await page.waitForFunction(() => !document.querySelector('[data-syntax-state="loading"]'))

@@ -5,6 +5,7 @@ import {describe, expect, test} from 'bun:test'
 import {getNextAssetId, isConfigurationFile, isImageFile, readConfigurationFile} from '#src/lib/assets.ts'
 import {buildMessages} from '#src/lib/blocks.ts'
 import {diffLines, formatDiff} from '#src/lib/diff.ts'
+import {highlightCode} from '#src/lib/highlight.ts'
 import {parseSource} from '#src/lib/parse.ts'
 import {presets} from '#src/lib/presets.ts'
 import {inputSchema} from '#src/lib/schema.ts'
@@ -110,6 +111,7 @@ describe('resolveSender', () => {
       name: 'Assistant',
       side: 'theirs',
       background: '#3b9cf6',
+      avatar: {scale: 75},
     })
   })
   test('derives the display name from the sender ID', () => {
@@ -125,7 +127,17 @@ describe('resolveSender', () => {
     }, lookup)
     expect(sender.side).toBe('ours')
     expect(sender.avatar.src).toBe('/avatars/user.svg')
+    expect(sender.avatar.scale).toBe(90)
     expect(sender.background).toBe('#ff5cce')
+  })
+  test('uses the padded system glyph by default', () => {
+    const sender = resolveSender('system', {chat: []}, () => undefined)
+    expect(sender.avatar.scale).toBe(70)
+  })
+  test('uses the padded assistant glyph for custom senders on their side', () => {
+    const sender = resolveSender('reviewBot', {chat: []}, lookup)
+    expect(sender.avatar.src).toBe('/avatars/assistant.svg')
+    expect(sender.avatar.scale).toBe(75)
   })
   test('resolves imported image IDs', () => {
     const sender = resolveSender('user', {
@@ -135,13 +147,25 @@ describe('resolveSender', () => {
     expect(sender.avatar.src).toBe('/blob/3')
     expect(sender.avatar.glyph).toBe(false)
   })
-  test('keeps the built-in background when only a source is given', () => {
-    const sender = resolveSender('user', {
+  test('defaults explicitly supplied avatars to full scale', () => {
+    const sourceOnly = resolveSender('user', {
       chat: [],
       user: {avatar: '/jaid.jxl'},
     }, lookup)
-    expect(sender.avatar.src).toBe('/jaid.jxl')
-    expect(sender.background).toBe('#ff5cce')
+    expect(sourceOnly.avatar.src).toBe('/jaid.jxl')
+    expect(sourceOnly.avatar.scale).toBe(100)
+    expect(sourceOnly.background).toBe('#ff5cce')
+
+    const detailed = inputSchema.parse({
+      chat: [],
+      user: {
+        avatar: {src: '/jaid.jxl'},
+      },
+    })
+    expect(detailed.user.avatar).toMatchObject({
+      src: '/jaid.jxl',
+      scale: 100,
+    })
   })
 })
 describe('resolveStyle', () => {
@@ -149,6 +173,10 @@ describe('resolveStyle', () => {
     const style = resolveStyle({dataFlavor: 'yaml'}, {messageWidth: 320})
     expect(style.dataFlavor).toBe('yaml')
     expect(style.messageWidth).toBe(320)
+  })
+  test('inherits and overrides syntax themes', () => {
+    expect(resolveStyle({syntaxTheme: 'vesper'}).syntaxTheme).toBe('vesper')
+    expect(resolveStyle({syntaxTheme: 'vesper'}, {syntaxTheme: 'nord'}).syntaxTheme).toBe('nord')
   })
   test('falls back to JSON5', () => {
     expect(resolveStyle().dataFlavor).toBe('json5')
@@ -205,6 +233,19 @@ describe('offsetToPosition', () => {
   })
 })
 describe('definitive contract coverage', () => {
+  test('accepts bundled Shiki syntax themes and rejects unknown ones', () => {
+    const valid = parseSource('style:\n  syntaxTheme: vesper\nchat: []\n')
+    expect(valid.error).toBeUndefined()
+    expect(valid.input?.style?.syntaxTheme).toBe('vesper')
+    const invalid = parseSource('style:\n  syntaxTheme: definitely-not-a-theme\nchat: []\n')
+    expect(invalid.error).toContain('Invalid option')
+  })
+  test('renders a selected bundled syntax theme', async () => {
+    const defaultHtml = await highlightCode('const answer = 42', 'typescript')
+    const themedHtml = await highlightCode('const answer = 42', 'typescript', 'vesper')
+    expect(themedHtml).toContain('vesper')
+    expect(themedHtml).not.toBe(defaultHtml)
+  })
   test('allows empty messages', () => {
     const result = parseSource('chat:\n  - from: user\n')
     expect(result.error).toBeUndefined()

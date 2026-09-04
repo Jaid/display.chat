@@ -9,8 +9,13 @@
   font-size: 0.82em
   line-height: 1.55
   tab-size: 2
-  background: black
+  background: transparent
   user-select: text
+
+  :global(pre.shiki)
+    margin: 0
+    border-radius: inherit
+    background: transparent !important
 
   :global(.shiki)
     margin: 0
@@ -26,8 +31,6 @@
     background-color: transparent
 
   @include light
-    background: white
-
     :global(.shiki),
     :global(.shiki span)
       color: var(--shiki-light)

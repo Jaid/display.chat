@@ -16,7 +16,9 @@ import css from './style.module.sass'
 export type ContentBlockProps = {
   assets: AssetLookup
   block: ContentBlock
+  onHover: () => void
   onJump: () => void
+  onLeave: () => void
   style: Style
 }
 
@@ -60,19 +62,19 @@ const getNodeText = (node: ReactNode): string => {
   }
   return ''
 }
-const markdownComponents = {
+const getMarkdownComponents = (syntaxTheme: Style['syntaxTheme']) => ({
   pre: ({children}: {children?: ReactNode}) => {
     const element = Children.toArray(children)[0]
     const props = isValidElement<{children?: ReactNode
       className?: string}>(element) ? element.props : undefined
     const language = props?.className?.replace(/^language-/u, '') ?? 'text'
-    return <HighlightedCode code={getNodeText(props?.children).replace(/\n$/u, '')} language={language}/>
+    return <HighlightedCode code={getNodeText(props?.children).replace(/\n$/u, '')} language={language} syntaxTheme={syntaxTheme}/>
   },
   a: ({children, href}: {children?: ReactNode
     href?: string}) => {
     return <a href={href} target="_blank" rel="noreferrer">{children}</a>
   },
-}
+})
 const bleedKinds = new Set<ContentKind>(['image', 'code', 'data', 'diff'])
 const getSelection = () => {
   const candidate = globalThis as {getSelection?: () => Selection | null}
@@ -84,7 +86,7 @@ const resolveImageSource = (block: Extract<ContentBlock, {kind: 'image'}>, asset
   }
   return block.value
 }
-const ContentBlockView = ({block, style, assets, onJump}: ContentBlockProps) => {
+const ContentBlockView = ({block, style, assets, onHover, onJump, onLeave}: ContentBlockProps) => {
   const handleClick = () => {
     const selection = getSelection()
     if (selection && !selection.isCollapsed) {
@@ -99,7 +101,7 @@ const ContentBlockView = ({block, style, assets, onJump}: ContentBlockProps) => 
       break
     }
     case 'markdown': {
-      content = <div className={css.markdown}><Markdown components={markdownComponents}>{block.value}</Markdown></div>
+      content = <div className={css.markdown}><Markdown components={getMarkdownComponents(style.syntaxTheme)}>{block.value}</Markdown></div>
       break
     }
     case 'image': {
@@ -117,13 +119,13 @@ const ContentBlockView = ({block, style, assets, onJump}: ContentBlockProps) => 
       } : block.value
       content = <>
         {block.file === undefined ? undefined : <div className={css.fileName}>{block.file}</div>}
-        <HighlightedCode code={code.text} language={code.language ?? 'text'}/>
+        <HighlightedCode code={code.text} language={code.language ?? 'text'} syntaxTheme={style.syntaxTheme}/>
       </>
       break
     }
     case 'data': {
       const serialized = serializeData(block.value, style.dataFlavor)
-      content = <HighlightedCode code={serialized.text} language={serialized.language}/>
+      content = <HighlightedCode code={serialized.text} language={serialized.language} syntaxTheme={style.syntaxTheme}/>
       break
     }
     case 'call': {
@@ -133,7 +135,7 @@ const ContentBlockView = ({block, style, assets, onJump}: ContentBlockProps) => 
           <span className={css.callIcon} aria-hidden="true">⚙</span>
           <span className={css.callName}>{block.value.tool}</span>
         </div>
-        {serialized === undefined ? undefined : <HighlightedCode code={serialized.text} language={serialized.language}/>}
+        {serialized === undefined ? undefined : <HighlightedCode code={serialized.text} language={serialized.language} syntaxTheme={style.syntaxTheme}/>}
       </div>
       break
     }
@@ -142,7 +144,7 @@ const ContentBlockView = ({block, style, assets, onJump}: ContentBlockProps) => 
       const text = 'diff' in block.value ? block.value.diff : formatDiff(diffLines(block.value.before, block.value.after))
       content = <>
         {fileName === undefined ? undefined : <div className={css.fileName}>{fileName}</div>}
-        <HighlightedCode code={text} language="diff"/>
+        <HighlightedCode code={text} language="diff" syntaxTheme={style.syntaxTheme}/>
       </>
       break
     }
@@ -159,6 +161,8 @@ const ContentBlockView = ({block, style, assets, onJump}: ContentBlockProps) => 
     data-kind={block.kind}
     data-bleed={bleedKinds.has(block.kind)}
     onClick={handleClick}
+    onMouseEnter={onHover}
+    onMouseLeave={onLeave}
     onKeyDown={handleKeyDown}
     role="button"
     tabIndex={0}

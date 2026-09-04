@@ -63,6 +63,7 @@ senders:
 
 style:
   dataFlavor: json5
+  syntaxTheme: vesper
   messageWidth: 70ch
 
 chat:
@@ -92,6 +93,8 @@ chat:
 A message may put any content kind directly on the message and may combine multiple shortcuts with an ordered `blocks` array. Shortcut properties render in their YAML source order; explicit blocks render afterwards in array order.
 
 Supported kinds are `text`, `markdown`, `image`, `code`, `data`, `call`, and `diff`. Code and image blocks optionally accept `file`.
+
+`style.syntaxTheme` accepts any bundled Shiki theme ID, such as `vesper`, `nord`, `tokyo-night`, or `catppuccin-mocha`. Message-level `style.syntaxTheme` overrides the root style for that message.
 
 ### Images
 
